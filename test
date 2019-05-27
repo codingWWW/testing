@@ -1,4 +1,23 @@
 ```ruby
+class SnippetsController < ApplicationController
+
+  def create
+    @snippet = Snippet.new(snippet_params)
+    if @snippet.save
+      @client ||= IronWorkerNG::Client.new(:token => ENV["TOKEN"], :project_id => ENV["PROJECT_ID"])
+      @client.tasks.create("pygments",
+                           "database" => Rails.configuration.database_configuration[Rails.env], # This sends in database credentials
+                           "request" => {"lang" => @snippet.language,
+                                         "code" => @snippet.plain_code},
+                           "snippet_id" => @snippet.id)
+      redirect_to @snippet
+    else
+      render :new
+    end
+  end
+
+```
+```ruby
 <script>        
   // This is called with the results from from FB.getLoginStatus().
   function statusChangeCallback(response) {
